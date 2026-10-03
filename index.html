@@ -9,9 +9,13 @@
 <title>Poêle à granulés</title>
 <style>
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;font-family:system-ui,sans-serif;background:#1c1917;color:#fafaf9}
-main{max-width:480px;margin:0 auto;padding:16px}
-h2{font-size:15px;color:#a8a29e;margin:22px 0 8px;text-transform:uppercase;letter-spacing:.05em}
+main{max-width:480px;margin:0 auto;padding:16px 16px 40px}
+h2{font-size:14px;color:#a8a29e;margin:22px 0 8px;text-transform:uppercase;letter-spacing:.05em}
+.tabs{display:flex;gap:6px;background:#292524;border-radius:12px;padding:4px;margin-bottom:14px}
+.tabs button{flex:1;padding:10px;border:0;border-radius:9px;background:none;color:#a8a29e;font-size:15px;font-weight:600}
+.tabs button.act{background:#c2410c;color:#fff}
 .card{background:#292524;border-radius:14px;padding:16px;text-align:center}
 #etat{font-size:24px;font-weight:700}
 #since{color:#a8a29e;margin-top:4px}
@@ -19,66 +23,161 @@ h2{font-size:15px;color:#a8a29e;margin:22px 0 8px;text-transform:uppercase;lette
 .big.on{background:#c2410c}.big.off{background:#15803d}
 .row{display:flex;gap:8px}
 .row button{flex:1;padding:16px;font-size:18px;font-weight:700;border:0;border-radius:12px;background:#44403c;color:#fff}
-.row button:active,.big:active{opacity:.7}
+button:active{opacity:.7}
 .stats{display:flex;gap:8px;margin-top:14px}
 .stats div{flex:1;background:#292524;border-radius:12px;padding:10px;text-align:center}
 .stats b{display:block;font-size:18px}.stats span{font-size:12px;color:#a8a29e}
+.hh{display:flex;justify-content:space-between;align-items:center}
+.hh .mini button{background:#44403c;border:0;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;margin-left:4px}
 ul{list-style:none;padding:0;margin:0}
 li{display:flex;justify-content:space-between;align-items:center;background:#292524;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:14px}
 li small{color:#a8a29e;display:block}
-li button{background:none;border:0;color:#a8a29e;font-size:18px;padding:4px 8px}
-#msg{position:fixed;left:0;right:0;bottom:0;background:#b91c1c;padding:10px;text-align:center;display:none}
+li .acts button{background:none;border:0;color:#a8a29e;font-size:18px;padding:4px 8px}
+#msg{position:fixed;left:0;right:0;bottom:0;background:#b91c1c;padding:10px;text-align:center;display:none;z-index:20}
+/* Récap */
+.seg{display:flex;gap:6px;margin-bottom:8px}
+.seg button{flex:1;padding:10px 4px;border:0;border-radius:10px;background:#292524;color:#a8a29e;font-weight:600;font-size:14px}
+.seg button.act{background:#44403c;color:#fff}
+#leg{font-size:12px;color:#a8a29e;margin-bottom:8px;min-height:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.k{border-radius:14px;padding:14px;color:#fff}
+.k b{display:block;font-size:26px;line-height:1.1}
+.k span{font-size:12px;opacity:.85}
+.k small{display:block;font-size:11px;opacity:.9;margin-top:2px;min-height:14px}
+.k.a{background:linear-gradient(135deg,#c2410c,#ea580c)}
+.k.b{background:linear-gradient(135deg,#a16207,#ca8a04)}
+.k.c{background:linear-gradient(135deg,#0f766e,#14b8a6)}
+.k.d{background:linear-gradient(135deg,#6d28d9,#8b5cf6)}
+.panel{background:#292524;border-radius:14px;padding:14px;margin-top:10px}
+.panel h3{margin:0 0 10px;font-size:14px;color:#d6d3d1}
+.chart{display:flex;gap:3px;height:150px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0}
+.bw{flex:1;width:100%;display:flex;align-items:flex-end;gap:2px}
+.bar{flex:1;border-radius:4px 4px 0 0;min-height:2px}
+.v,.l{font-size:10px;color:#a8a29e;height:14px;line-height:14px;white-space:nowrap}
+.info{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px solid #3a3532}
+.info:last-child{border:0}.info span{color:#a8a29e}.info b{text-align:right}
+/* Modal */
+#modal{position:fixed;inset:0;background:#000a;display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.sheet{background:#292524;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:18px}
+.sheet h3{margin:0 0 12px}
+.sheet label{display:block;font-size:13px;color:#a8a29e;margin-bottom:12px}
+.sheet input,.sheet select{display:block;width:100%;margin-top:4px;padding:12px;font-size:16px;border-radius:10px;border:0;background:#44403c;color:#fff}
+.sheet .row button.ok{background:#c2410c}
 </style>
 </head>
 <body>
 <main>
-  <div class="card"><div id="etat">…</div><div id="since"></div></div>
-  <button id="toggle" class="big on">…</button>
-
-  <h2>Remplissage (sacs)</h2>
-  <div class="row">
-    <button data-s="0.5">+ ½</button>
-    <button data-s="1">+ 1</button>
-    <button data-s="2">+ 2</button>
+  <div class="tabs">
+    <button id="tSuivi" class="act">Suivi</button>
+    <button id="tRecap">Récap</button>
   </div>
 
-  <div class="stats">
-    <div><b id="stJ">–</b><span>Aujourd'hui</span></div>
-    <div><b id="stH7">–</b><span>7 jours</span></div>
-    <div><b id="stS7">–</b><span>Sacs 7 j</span></div>
-  </div>
+  <section id="vSuivi">
+    <div class="card"><div id="etat">…</div><div id="since"></div></div>
+    <button id="toggle" class="big on">…</button>
 
-  <h2>Historique</h2>
-  <ul id="hist"></ul>
+    <h2>Remplissage (1 sac max)</h2>
+    <div class="row">
+      <button data-s="0.5">+ ½ sac</button>
+      <button data-s="1">+ 1 sac</button>
+    </div>
+
+    <div class="stats">
+      <div><b id="stJ">–</b><span>Aujourd'hui</span></div>
+      <div><b id="stH7">–</b><span>7 jours</span></div>
+      <div><b id="stS7">–</b><span>Sacs 7 j</span></div>
+    </div>
+
+    <div class="hh">
+      <h2>Historique</h2>
+      <div class="mini">
+        <button id="addS">+ Session</button>
+        <button id="addF">+ Sacs</button>
+      </div>
+    </div>
+    <ul id="hist"></ul>
+  </section>
+
+  <section id="vRecap" hidden>
+    <div class="seg">
+      <button data-p="7" class="act">7 j</button>
+      <button data-p="30">30 j</button>
+      <button data-p="12">1 an</button>
+      <button data-p="0">Tout</button>
+    </div>
+    <div id="leg"></div>
+    <div class="grid">
+      <div class="k a"><b id="rH">–</b><span>🔥 Chauffe totale</span><small id="dH"></small></div>
+      <div class="k b"><b id="rS">–</b><span>🛍 Sacs consommés</span><small id="dS"></small></div>
+      <div class="k c"><b id="rM">–</b><span>📅 Moyenne par jour</span><small></small></div>
+      <div class="k d"><b id="rHS">–</b><span>⏱ Autonomie par sac</span><small></small></div>
+    </div>
+    <div class="panel"><h3>Heures de chauffe</h3><div id="cH"></div></div>
+    <div class="panel"><h3>Sacs ajoutés</h3><div id="cS"></div></div>
+    <div class="panel">
+      <div class="info"><span>Jours chauffés</span><b id="iJ">–</b></div>
+      <div class="info"><span>Allumage habituel</span><b id="iA">–</b></div>
+      <div class="info"><span>Session la plus longue</span><b id="iL">–</b></div>
+      <div class="info"><span>Nombre de sessions</span><b id="iN">–</b></div>
+      <div class="info"><span id="iPl">Pic de chauffe</span><b id="iP">–</b></div>
+    </div>
+  </section>
 </main>
+
+<div id="modal" hidden>
+  <div class="sheet">
+    <h3 id="mTitle"></h3>
+    <div id="fS">
+      <label>Début<input type="datetime-local" id="eDebut"></label>
+      <label>Fin (vide = en cours)<input type="datetime-local" id="eFin"></label>
+    </div>
+    <div id="fF" hidden>
+      <label>Date<input type="datetime-local" id="eDate"></label>
+      <label>Sacs<select id="eSacs"></select></label>
+    </div>
+    <div class="row">
+      <button id="eCancel">Annuler</button>
+      <button id="eSave" class="ok">Enregistrer</button>
+    </div>
+  </div>
+</div>
 <div id="msg"></div>
 
 <script>
+const SUPABASE_URL = "https://thbqkeugjvsxbryfnzuo.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_2-Ij-nrTPeK6rB-kSD-QTg_b42zNakq";
+const H = {apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation'};
 
-        const SB_URL = "https://thbqkeugjvsxbryfnzuo.supabase.co";
-        const SB_KEY = "sb_publishable_2-Ij-nrTPeK6rB-kSD-QTg_b42zNakq";
-const H = {apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation'};
-
-let sessions = [], fills = [];
+let sessions = [], fills = [], per = 7, ed = null;
+const $ = id => document.getElementById(id);
 
 async function api(path, opt = {}) {
-  const r = await fetch(SB_URL + '/rest/v1/' + path, {headers: H, ...opt});
+  const r = await fetch(SUPABASE_URL + '/rest/v1/' + path, {headers: H, ...opt});
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
-
+async function all(table, order) {
+  let out = [], off = 0;
+  while (true) {
+    const r = await api(table + '?select=*&order=' + order + '&limit=1000&offset=' + off);
+    out = out.concat(r);
+    if (r.length < 1000) break;
+    off += 1000;
+  }
+  return out;
+}
 function err(e) {
-  const m = document.getElementById('msg');
+  const m = $('msg');
   m.textContent = 'Erreur : ' + (e.message || e).slice(0, 120);
   m.style.display = 'block';
   setTimeout(() => m.style.display = 'none', 4000);
 }
-
 async function load() {
   try {
     [sessions, fills] = await Promise.all([
-      api('poele_sessions?select=*&order=debut.desc&limit=200'),
-      api('poele_remplissages?select=*&order=date.desc&limit=200')
+      all('poele_sessions', 'debut.desc'),
+      all('poele_remplissages', 'date.desc')
     ]);
     render();
   } catch (e) { err(e); }
@@ -94,46 +193,179 @@ function fmtSacs(n) {
   const e = Math.floor(n), h = n % 1 >= 0.5;
   return ((e ? e : '') + (h ? '½' : '')) || '0';
 }
-function overlap(s, from) {
-  const a = Math.max(new Date(s.debut), from);
-  const b = s.fin ? new Date(s.fin) : Date.now();
-  return Math.max(0, b - a);
+const fmtH = v => v.toFixed(1).replace('.0', '') + 'h';
+const fmtHr = v => Math.round(v) + 'h';
+function ov(s, a, b) {
+  const x = Math.max(new Date(s.debut), a);
+  const y = Math.min(s.fin ? new Date(s.fin) : Date.now(), b);
+  return Math.max(0, y - x);
+}
+function toLocal(d) {
+  const x = new Date(d);
+  x.setMinutes(x.getMinutes() - x.getTimezoneOffset());
+  return x.toISOString().slice(0, 16);
 }
 
 function render() {
   const open = sessions.find(s => !s.fin);
-  const btn = document.getElementById('toggle');
+  const btn = $('toggle');
   if (open) {
-    document.getElementById('etat').textContent = '🔥 En marche';
-    document.getElementById('since').textContent = 'depuis ' + hm(open.debut) + ' (' + fmtDur(Date.now() - new Date(open.debut)) + ')';
+    $('etat').textContent = '🔥 En marche';
+    $('since').textContent = 'depuis ' + hm(open.debut) + ' (' + fmtDur(Date.now() - new Date(open.debut)) + ')';
     btn.textContent = 'Éteindre'; btn.className = 'big off';
   } else {
-    document.getElementById('etat').textContent = '⏹ Éteint';
+    $('etat').textContent = '⏹ Éteint';
     const last = sessions[0];
-    document.getElementById('since').textContent = last ? 'dernier arrêt ' + dh(last.fin) : '';
+    $('since').textContent = last && last.fin ? 'dernier arrêt ' + dh(last.fin) : '';
     btn.textContent = 'Allumer'; btn.className = 'big on';
   }
 
   const t0 = new Date(); t0.setHours(0, 0, 0, 0);
-  const d7 = Date.now() - 7 * 864e5;
-  document.getElementById('stJ').textContent = fmtDur(sessions.reduce((t, s) => t + overlap(s, t0), 0));
-  document.getElementById('stH7').textContent = fmtDur(sessions.reduce((t, s) => t + overlap(s, d7), 0));
-  document.getElementById('stS7').textContent = fmtSacs(fills.filter(f => new Date(f.date) >= d7).reduce((t, f) => t + Number(f.sacs), 0));
+  const d7 = Date.now() - 7 * 864e5, inf = new Date(8.64e15);
+  $('stJ').textContent = fmtDur(sessions.reduce((t, s) => t + ov(s, t0, inf), 0));
+  $('stH7').textContent = fmtDur(sessions.reduce((t, s) => t + ov(s, d7, inf), 0));
+  $('stS7').textContent = fmtSacs(fills.filter(f => new Date(f.date) >= d7).reduce((t, f) => t + Number(f.sacs), 0));
 
   const items = [
     ...sessions.map(s => ({t: 'poele_sessions', id: s.id, d: s.debut, o: s})),
     ...fills.map(f => ({t: 'poele_remplissages', id: f.id, d: f.date, o: f}))
-  ].sort((a, b) => new Date(b.d) - new Date(a.d));
+  ].sort((a, b) => new Date(b.d) - new Date(a.d)).slice(0, 60);
 
-  document.getElementById('hist').innerHTML = items.map(i => {
+  $('hist').innerHTML = items.map(i => {
     const txt = i.t === 'poele_sessions'
       ? '🔥 ' + dh(i.o.debut) + '<small>' + (i.o.fin ? '→ ' + hm(i.o.fin) + ' · ' + fmtDur(new Date(i.o.fin) - new Date(i.o.debut)) : 'en cours') + '</small>'
       : '🛍 +' + fmtSacs(Number(i.o.sacs)) + ' sac' + (Number(i.o.sacs) > 1 ? 's' : '') + '<small>' + dh(i.o.date) + '</small>';
-    return '<li><div>' + txt + '</div><button data-t="' + i.t + '" data-id="' + i.id + '">🗑</button></li>';
+    return '<li><div>' + txt + '</div><div class="acts"><button data-a="e" data-t="' + i.t + '" data-id="' + i.id + '">✏️</button><button data-a="d" data-t="' + i.t + '" data-id="' + i.id + '">🗑</button></div></li>';
   }).join('');
+
+  renderRecap();
 }
 
-document.getElementById('toggle').onclick = async () => {
+function chart(vals, prev, labels, fmt, c1, c2, showVal) {
+  const mx = Math.max(...vals, ...(prev || []), 0.0001);
+  return '<div class="chart">' + vals.map((v, i) =>
+    '<div class="col"><span class="v">' + (showVal && v ? fmt(v) : '') + '</span>' +
+    '<div class="bw">' +
+    (prev ? '<div class="bar" style="height:' + (prev[i] / mx * 100) + '%;background:' + c2 + '"></div>' : '') +
+    '<div class="bar" style="height:' + (v / mx * 100) + '%;background:' + c1 + '"></div></div>' +
+    '<span class="l">' + labels[i] + '</span></div>').join('') + '</div>';
+}
+
+function renderRecap() {
+  const now = new Date(), inf = new Date(8.64e15);
+  const hrsIn = (a, e) => sessions.reduce((t, s) => t + ov(s, a, e), 0) / 36e5;
+  const sacIn = (a, e) => fills.filter(f => { const d = new Date(f.date); return d >= a && d < e; }).reduce((t, f) => t + Number(f.sacs), 0);
+  const monthly = per === 12 || per === 0;
+  const hasPrev = per !== 0;
+  const B = [];
+
+  if (!monthly) {
+    for (let i = per - 1; i >= 0; i--) {
+      const a = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const e = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i + 1);
+      B.push({
+        a, e,
+        pa: new Date(a.getFullYear(), a.getMonth(), a.getDate() - per),
+        pe: new Date(e.getFullYear(), e.getMonth(), e.getDate() - per),
+        lab: per <= 7 ? 'DLMMJVS'[a.getDay()] : (i % 5 === 0 ? a.getDate() : ''),
+        full: a.toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'})
+      });
+    }
+  } else {
+    let n = 12;
+    if (per === 0) {
+      const ds = [...sessions.map(s => new Date(s.debut)), ...fills.map(f => new Date(f.date))];
+      if (ds.length) {
+        const mn = new Date(Math.min(...ds));
+        n = (now.getFullYear() - mn.getFullYear()) * 12 + now.getMonth() - mn.getMonth() + 1;
+      }
+      n = Math.max(n, 1);
+    }
+    for (let i = n - 1; i >= 0; i--) {
+      const a = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const e = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const short = a.toLocaleDateString('fr-FR', {month: 'short'}).replace('.', '');
+      B.push({
+        a, e,
+        pa: new Date(a.getFullYear() - 1, a.getMonth(), 1),
+        pe: new Date(e.getFullYear() - 1, e.getMonth(), 1),
+        lab: n <= 12 ? short : (i % 3 === 0 ? (a.getMonth() + 1) + '/' + String(a.getFullYear()).slice(2) : ''),
+        full: a.toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'})
+      });
+    }
+  }
+
+  const hrs = B.map(x => hrsIn(x.a, x.e));
+  const sac = B.map(x => sacIn(x.a, x.e));
+  const pH = hasPrev ? B.map(x => hrsIn(x.pa, x.pe)) : null;
+  const pS = hasPrev ? B.map(x => sacIn(x.pa, x.pe)) : null;
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  const totH = sum(hrs), totS = sum(sac);
+  const days = Math.max(1, Math.ceil((now - B[0].a) / 864e5));
+
+  const dl = (c, p) => {
+    if (!hasPrev || !p || p <= 0) return '';
+    const pct = Math.round((c - p) / p * 100);
+    return (pct >= 0 ? '▲ +' : '▼ ') + pct + ' % vs préc.';
+  };
+
+  $('rH').textContent = fmtH(totH);
+  $('rS').textContent = fmtSacs(totS);
+  $('rM').textContent = fmtH(totH / days);
+  $('rHS').textContent = totS ? fmtH(totH / totS) : '–';
+  $('dH').textContent = pH ? dl(totH, sum(pH)) : '';
+  $('dS').textContent = pS ? dl(totS, sum(pS)) : '';
+
+  const cmp = per === 12;
+  $('leg').innerHTML = cmp
+    ? '<span style="color:#fb923c">■</span> 12 derniers mois &nbsp; <span style="color:#78716c">■</span> même mois, année précédente'
+    : '';
+  const lab = B.map(x => x.lab);
+  const showV = B.length <= 12;
+  $('cH').innerHTML = chart(hrs, cmp ? pH : null, lab, monthly ? fmtHr : fmtH, 'linear-gradient(#fb923c,#c2410c)', '#57534e', showV);
+  $('cS').innerHTML = chart(sac, cmp ? pS : null, lab, fmtSacs, 'linear-gradient(#fde047,#ca8a04)', '#57534e', showV);
+
+  const from = B[0].a;
+  const ss = sessions.filter(s => ov(s, from, inf) > 0);
+  const set = new Set();
+  ss.forEach(s => {
+    let d = new Date(Math.max(new Date(s.debut), from));
+    d.setHours(0, 0, 0, 0);
+    const end = s.fin ? new Date(s.fin) : now;
+    while (d <= end) {
+      set.add(d.getTime());
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+    }
+  });
+  $('iJ').textContent = set.size + ' / ' + days;
+  $('iN').textContent = ss.length;
+  const lg = ss.reduce((m, s) => Math.max(m, (s.fin ? new Date(s.fin) : Date.now()) - new Date(s.debut)), 0);
+  $('iL').textContent = lg ? fmtDur(lg) : '–';
+  if (ss.length) {
+    const mn = ss.reduce((t, s) => { const d = new Date(s.debut); return t + d.getHours() * 60 + d.getMinutes(); }, 0) / ss.length;
+    $('iA').textContent = Math.floor(mn / 60) + 'h' + String(Math.round(mn % 60)).padStart(2, '0');
+  } else $('iA').textContent = '–';
+
+  $('iPl').textContent = monthly ? 'Mois le plus chargé' : 'Jour le plus chargé';
+  const mx = Math.max(...hrs);
+  $('iP').textContent = mx > 0 ? B[hrs.indexOf(mx)].full + ' · ' + fmtH(mx) : '–';
+}
+
+// Onglets
+function tab(r) {
+  $('vSuivi').hidden = r; $('vRecap').hidden = !r;
+  $('tSuivi').className = r ? '' : 'act'; $('tRecap').className = r ? 'act' : '';
+}
+$('tSuivi').onclick = () => tab(false);
+$('tRecap').onclick = () => tab(true);
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
+  per = Number(b.dataset.p);
+  document.querySelectorAll('.seg button').forEach(x => x.className = x === b ? 'act' : '');
+  renderRecap();
+});
+
+// Actions rapides
+$('toggle').onclick = async () => {
   try {
     const open = sessions.find(s => !s.fin);
     if (open) await api('poele_sessions?id=eq.' + open.id, {method: 'PATCH', body: JSON.stringify({fin: new Date().toISOString()})});
@@ -141,7 +373,6 @@ document.getElementById('toggle').onclick = async () => {
     load();
   } catch (e) { err(e); }
 };
-
 document.querySelectorAll('[data-s]').forEach(b => b.onclick = async () => {
   try {
     await api('poele_remplissages', {method: 'POST', body: JSON.stringify({sacs: Number(b.dataset.s)})});
@@ -149,9 +380,54 @@ document.querySelectorAll('[data-s]').forEach(b => b.onclick = async () => {
   } catch (e) { err(e); }
 });
 
-document.getElementById('hist').onclick = async e => {
+// Édition
+$('eSacs').innerHTML = '<option value="0.5">½ sac</option><option value="1">1 sac</option>';
+
+function openEd(t, id) {
+  ed = {t, id};
+  const isS = t === 'poele_sessions';
+  const o = id ? (isS ? sessions : fills).find(x => x.id == id) : null;
+  $('fS').hidden = !isS; $('fF').hidden = isS;
+  $('mTitle').textContent = (id ? 'Modifier ' : 'Ajouter ') + (isS ? 'une session' : 'un remplissage');
+  if (isS) {
+    $('eDebut').value = toLocal(o ? o.debut : new Date());
+    $('eFin').value = o && o.fin ? toLocal(o.fin) : '';
+  } else {
+    $('eDate').value = toLocal(o ? o.date : new Date());
+    $('eSacs').value = o && Number(o.sacs) <= 0.5 ? '0.5' : '1';
+  }
+  $('modal').hidden = false;
+}
+$('addS').onclick = () => openEd('poele_sessions', null);
+$('addF').onclick = () => openEd('poele_remplissages', null);
+$('eCancel').onclick = () => $('modal').hidden = true;
+
+$('eSave').onclick = async () => {
+  try {
+    let body;
+    if (ed.t === 'poele_sessions') {
+      const d = new Date($('eDebut').value);
+      if (isNaN(d)) return err('Début invalide');
+      const f = $('eFin').value ? new Date($('eFin').value) : null;
+      if (f && f <= d) return err('La fin doit être après le début');
+      body = {debut: d.toISOString(), fin: f ? f.toISOString() : null};
+    } else {
+      const d = new Date($('eDate').value);
+      if (isNaN(d)) return err('Date invalide');
+      body = {date: d.toISOString(), sacs: Number($('eSacs').value)};
+    }
+    if (ed.id) await api(ed.t + '?id=eq.' + ed.id, {method: 'PATCH', body: JSON.stringify(body)});
+    else await api(ed.t, {method: 'POST', body: JSON.stringify(body)});
+    $('modal').hidden = true;
+    load();
+  } catch (e) { err(e); }
+};
+
+$('hist').onclick = async e => {
   const b = e.target.closest('button[data-id]');
-  if (!b || !confirm('Supprimer cette ligne ?')) return;
+  if (!b) return;
+  if (b.dataset.a === 'e') return openEd(b.dataset.t, b.dataset.id);
+  if (!confirm('Supprimer cette ligne ?')) return;
   try {
     await api(b.dataset.t + '?id=eq.' + b.dataset.id, {method: 'DELETE'});
     load();
