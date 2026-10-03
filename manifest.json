@@ -1,0 +1,12 @@
+{
+  "name": "Poêle à granulés",
+  "short_name": "Poêle",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1c1917",
+  "theme_color": "#c2410c",
+  "icons": [
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+  ]
+}
