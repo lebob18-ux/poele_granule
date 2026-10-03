@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#c2410c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<title>Poêle à granulés</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,sans-serif;background:#1c1917;color:#fafaf9}
+main{max-width:480px;margin:0 auto;padding:16px}
+h2{font-size:15px;color:#a8a29e;margin:22px 0 8px;text-transform:uppercase;letter-spacing:.05em}
+.card{background:#292524;border-radius:14px;padding:16px;text-align:center}
+#etat{font-size:24px;font-weight:700}
+#since{color:#a8a29e;margin-top:4px}
+.big{width:100%;margin-top:12px;padding:20px;font-size:20px;font-weight:700;border:0;border-radius:14px;color:#fff}
+.big.on{background:#c2410c}.big.off{background:#15803d}
+.row{display:flex;gap:8px}
+.row button{flex:1;padding:16px;font-size:18px;font-weight:700;border:0;border-radius:12px;background:#44403c;color:#fff}
+.row button:active,.big:active{opacity:.7}
+.stats{display:flex;gap:8px;margin-top:14px}
+.stats div{flex:1;background:#292524;border-radius:12px;padding:10px;text-align:center}
+.stats b{display:block;font-size:18px}.stats span{font-size:12px;color:#a8a29e}
+ul{list-style:none;padding:0;margin:0}
+li{display:flex;justify-content:space-between;align-items:center;background:#292524;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:14px}
+li small{color:#a8a29e;display:block}
+li button{background:none;border:0;color:#a8a29e;font-size:18px;padding:4px 8px}
+#msg{position:fixed;left:0;right:0;bottom:0;background:#b91c1c;padding:10px;text-align:center;display:none}
+</style>
+</head>
+<body>
+<main>
+  <div class="card"><div id="etat">…</div><div id="since"></div></div>
+  <button id="toggle" class="big on">…</button>
+
+  <h2>Remplissage (sacs)</h2>
+  <div class="row">
+    <button data-s="0.5">+ ½</button>
+    <button data-s="1">+ 1</button>
+    <button data-s="2">+ 2</button>
+  </div>
+
+  <div class="stats">
+    <div><b id="stJ">–</b><span>Aujourd'hui</span></div>
+    <div><b id="stH7">–</b><span>7 jours</span></div>
+    <div><b id="stS7">–</b><span>Sacs 7 j</span></div>
+  </div>
+
+  <h2>Historique</h2>
+  <ul id="hist"></ul>
+</main>
+<div id="msg"></div>
+
+<script>
+
+        const SB_URL = "https://thbqkeugjvsxbryfnzuo.supabase.co";
+        const SB_KEY = "sb_publishable_2-Ij-nrTPeK6rB-kSD-QTg_b42zNakq";
+const H = {apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation'};
+
+let sessions = [], fills = [];
+
+async function api(path, opt = {}) {
+  const r = await fetch(SB_URL + '/rest/v1/' + path, {headers: H, ...opt});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function err(e) {
+  const m = document.getElementById('msg');
+  m.textContent = 'Erreur : ' + (e.message || e).slice(0, 120);
+  m.style.display = 'block';
+  setTimeout(() => m.style.display = 'none', 4000);
+}
+
+async function load() {
+  try {
+    [sessions, fills] = await Promise.all([
+      api('poele_sessions?select=*&order=debut.desc&limit=200'),
+      api('poele_remplissages?select=*&order=date.desc&limit=200')
+    ]);
+    render();
+  } catch (e) { err(e); }
+}
+
+const hm = d => new Date(d).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'});
+const dh = d => new Date(d).toLocaleString('fr-FR', {weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
+function fmtDur(ms) {
+  const m = Math.round(ms / 60000);
+  return Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0');
+}
+function fmtSacs(n) {
+  const e = Math.floor(n), h = n % 1 >= 0.5;
+  return ((e ? e : '') + (h ? '½' : '')) || '0';
+}
+function overlap(s, from) {
+  const a = Math.max(new Date(s.debut), from);
+  const b = s.fin ? new Date(s.fin) : Date.now();
+  return Math.max(0, b - a);
+}
+
+function render() {
+  const open = sessions.find(s => !s.fin);
+  const btn = document.getElementById('toggle');
+  if (open) {
+    document.getElementById('etat').textContent = '🔥 En marche';
+    document.getElementById('since').textContent = 'depuis ' + hm(open.debut) + ' (' + fmtDur(Date.now() - new Date(open.debut)) + ')';
+    btn.textContent = 'Éteindre'; btn.className = 'big off';
+  } else {
+    document.getElementById('etat').textContent = '⏹ Éteint';
+    const last = sessions[0];
+    document.getElementById('since').textContent = last ? 'dernier arrêt ' + dh(last.fin) : '';
+    btn.textContent = 'Allumer'; btn.className = 'big on';
+  }
+
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const d7 = Date.now() - 7 * 864e5;
+  document.getElementById('stJ').textContent = fmtDur(sessions.reduce((t, s) => t + overlap(s, t0), 0));
+  document.getElementById('stH7').textContent = fmtDur(sessions.reduce((t, s) => t + overlap(s, d7), 0));
+  document.getElementById('stS7').textContent = fmtSacs(fills.filter(f => new Date(f.date) >= d7).reduce((t, f) => t + Number(f.sacs), 0));
+
+  const items = [
+    ...sessions.map(s => ({t: 'poele_sessions', id: s.id, d: s.debut, o: s})),
+    ...fills.map(f => ({t: 'poele_remplissages', id: f.id, d: f.date, o: f}))
+  ].sort((a, b) => new Date(b.d) - new Date(a.d));
+
+  document.getElementById('hist').innerHTML = items.map(i => {
+    const txt = i.t === 'poele_sessions'
+      ? '🔥 ' + dh(i.o.debut) + '<small>' + (i.o.fin ? '→ ' + hm(i.o.fin) + ' · ' + fmtDur(new Date(i.o.fin) - new Date(i.o.debut)) : 'en cours') + '</small>'
+      : '🛍 +' + fmtSacs(Number(i.o.sacs)) + ' sac' + (Number(i.o.sacs) > 1 ? 's' : '') + '<small>' + dh(i.o.date) + '</small>';
+    return '<li><div>' + txt + '</div><button data-t="' + i.t + '" data-id="' + i.id + '">🗑</button></li>';
+  }).join('');
+}
+
+document.getElementById('toggle').onclick = async () => {
+  try {
+    const open = sessions.find(s => !s.fin);
+    if (open) await api('poele_sessions?id=eq.' + open.id, {method: 'PATCH', body: JSON.stringify({fin: new Date().toISOString()})});
+    else await api('poele_sessions', {method: 'POST', body: JSON.stringify({debut: new Date().toISOString()})});
+    load();
+  } catch (e) { err(e); }
+};
+
+document.querySelectorAll('[data-s]').forEach(b => b.onclick = async () => {
+  try {
+    await api('poele_remplissages', {method: 'POST', body: JSON.stringify({sacs: Number(b.dataset.s)})});
+    load();
+  } catch (e) { err(e); }
+});
+
+document.getElementById('hist').onclick = async e => {
+  const b = e.target.closest('button[data-id]');
+  if (!b || !confirm('Supprimer cette ligne ?')) return;
+  try {
+    await api(b.dataset.t + '?id=eq.' + b.dataset.id, {method: 'DELETE'});
+    load();
+  } catch (x) { err(x); }
+};
+
+setInterval(render, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+load();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
